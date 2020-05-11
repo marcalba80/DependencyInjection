@@ -32,9 +32,6 @@ public class Container implements Injector {
     @Override
     public void registerFactory(String name, Factory creator, String... parameters) throws DependencyException {
         if(!factoryHashMap.containsKey(name)){
-            /*for(String dependency: parameters){
-                if(!objectHashMap.containsKey(dependency)) throw new DependencyException("");
-            }*/
             factoryHashMap.put(name, creator);
             dependenciesHashMap.put(name, parameters);
         }
@@ -44,9 +41,6 @@ public class Container implements Injector {
     @Override
     public void registerSingleton(String name, Factory creator, String... parameters) throws DependencyException {
         if(!singletonHashMap.containsKey(name)){
-            /*for(String dependency: parameters){
-                if(!objectHashMap.containsKey(dependency)) throw new DependencyException("");
-            }*/
             singletonHashMap.put(name, creator);
             dependenciesHashMap.put(name, parameters);
         }
@@ -94,7 +88,8 @@ public class Container implements Injector {
 
     private void checkDependencies(String name) throws DependencyException{
         for(String dependency: dependenciesHashMap.get(name)){
-            if(!objectHashMap.containsKey(dependency)) throw new DependencyException("Dependency missed");
+            if(!objectHashMap.containsKey(dependency) && !singletonObjectHashMap.containsKey(dependency))
+                throw new DependencyException("Dependency missed");
         }
     }
 }

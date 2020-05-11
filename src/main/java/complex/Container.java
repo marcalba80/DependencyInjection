@@ -6,7 +6,6 @@ import java.util.HashMap;
 
 public class Container implements Injector {
 
-    private boolean REGISTERED = true;
     private HashMap<Class<?>, Object> objectHashMap;
     private HashMap<Class<?>, Factory<?>> factoryHashMap;
     private HashMap<Class<?>, Factory<?>> singletonHashMap;
@@ -91,7 +90,8 @@ public class Container implements Injector {
     @SuppressWarnings("unchecked")
     private <E> void checkDependencies(Class<E> name) throws DependencyException{
         for(Class<E> dependency: (Class<E>[]) dependenciesHashMap.get(name)){
-            if(!objectHashMap.containsKey(dependency)) throw new DependencyException("Dependency missed");
+            if(!objectHashMap.containsKey(dependency) && !singletonObjectHashMap.containsKey(dependency))
+                throw new DependencyException("Dependency missed");
         }
     }
 }
