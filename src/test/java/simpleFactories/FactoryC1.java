@@ -12,7 +12,7 @@ public class FactoryC1 implements Factory {
         try {
             s = (String) parameters[0];
         }catch (ClassCastException | ArrayIndexOutOfBoundsException ex){
-            System.err.println("ERROR: Something went wrong when trying to create a instance of ImplementationB1.");
+            System.err.println("ERROR: Something went wrong when trying to create a instance of ImplementationC1.");
             throw new DependencyException(ex);
         }
         return new ImplementationC1(s);

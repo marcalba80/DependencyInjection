@@ -22,7 +22,7 @@ public class Container implements Injector {
 
     @Override
     public <E> void registerConstant(Class<E> name, E value) throws DependencyException {
-        if(!objectHashMap.containsKey(name)){
+        if(!objectHashMap.containsKey(name) && !factoryHashMap.containsKey(name) && !singletonHashMap.containsKey(name)){
             objectHashMap.put(name, value);
         }
         else throw new DependencyException("Constant " + name + " is already registered");
@@ -30,7 +30,7 @@ public class Container implements Injector {
 
     @Override
     public <E> void registerFactory(Class<E> name, Factory<? extends E> creator, Class<?>... parameters) throws DependencyException {
-        if(!factoryHashMap.containsKey(name)){
+        if(!objectHashMap.containsKey(name) && !factoryHashMap.containsKey(name) && !singletonHashMap.containsKey(name)){
             factoryHashMap.put(name, creator);
             dependenciesHashMap.put(name, parameters);
         }
@@ -39,7 +39,7 @@ public class Container implements Injector {
 
     @Override
     public <E> void registerSingleton(Class<E> name, Factory<? extends E> creator, Class<?>... parameters) throws DependencyException {
-        if(!singletonHashMap.containsKey(name)){
+        if(!objectHashMap.containsKey(name) && !factoryHashMap.containsKey(name) && !singletonHashMap.containsKey(name)){
             singletonHashMap.put(name, creator);
             dependenciesHashMap.put(name, parameters);
         }
@@ -49,15 +49,6 @@ public class Container implements Injector {
     @SuppressWarnings("unchecked")
     @Override
     public <E> E getObject(Class<E> name) throws DependencyException {
-        if(objectHashMap.containsKey(name) && factoryHashMap.containsKey(name)){
-            throw new DependencyException("Key duplicated");
-        }
-        if(objectHashMap.containsKey(name) && singletonHashMap.containsKey(name)){
-            throw new DependencyException("Key duplicated");
-        }
-        if(factoryHashMap.containsKey(name) && singletonHashMap.containsKey(name)){
-            throw new DependencyException("Key duplicated");
-        }
         if(objectHashMap.containsKey(name)){
             return (E) objectHashMap.get(name);
         }
@@ -68,7 +59,10 @@ public class Container implements Injector {
         else if (singletonHashMap.containsKey(name)){
             if(!singletonObjectHashMap.containsKey(name)) {
                 checkDependencies(name);
-                return (E) singletonObjectHashMap.put(name, singletonHashMap.get(name).create(getObjectDependencies(name)));
+                Object created = singletonHashMap.get(name).create(getObjectDependencies(name));
+                singletonObjectHashMap.put(name, created);
+                return (E) created;
+                //return (E) singletonObjectHashMap.put(name, singletonHashMap.get(name).create(getObjectDependencies(name)));
             }else
                 return (E) singletonObjectHashMap.get(name);
         }
@@ -91,7 +85,7 @@ public class Container implements Injector {
     private <E> void checkDependencies(Class<E> name) throws DependencyException{
         for(Class<E> dependency: (Class<E>[]) dependenciesHashMap.get(name)){
             if(!objectHashMap.containsKey(dependency) && !singletonObjectHashMap.containsKey(dependency))
-                throw new DependencyException("Dependency missed");
+                throw new DependencyException("Dependency missing");
         }
     }
 }

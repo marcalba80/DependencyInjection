@@ -8,7 +8,7 @@ import Interfaces.InterfaceC;
 import common.DependencyException;
 import complex.Factory;
 
-public class FactoryA1 implements Factory <ImplementationA1> {
+public class FactoryA1 implements Factory<ImplementationA1> {
 
     @Override
     public ImplementationA1 create(Object... parameters) throws DependencyException {

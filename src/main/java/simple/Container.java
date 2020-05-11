@@ -23,41 +23,32 @@ public class Container implements Injector {
 
     @Override
     public void registerConstant(String name, Object value) throws DependencyException {
-        if(!objectHashMap.containsKey(name)){
+        if(!objectHashMap.containsKey(name) && !factoryHashMap.containsKey(name) && !singletonHashMap.containsKey(name)){
             objectHashMap.put(name, value);
         }
-        else throw new DependencyException("Constant " + name + " is already registered");
+        else throw new DependencyException("Registering " + name + " already registered");
     }
 
     @Override
     public void registerFactory(String name, Factory creator, String... parameters) throws DependencyException {
-        if(!factoryHashMap.containsKey(name)){
+        if(!factoryHashMap.containsKey(name) && !objectHashMap.containsKey(name) && !singletonHashMap.containsKey(name)){
             factoryHashMap.put(name, creator);
             dependenciesHashMap.put(name, parameters);
         }
-        else throw new DependencyException("Factory " + name + " is already registered");
+        else throw new DependencyException("Registering " + name + " already registered");
     }
 
     @Override
     public void registerSingleton(String name, Factory creator, String... parameters) throws DependencyException {
-        if(!singletonHashMap.containsKey(name)){
+        if(!singletonHashMap.containsKey(name) && !objectHashMap.containsKey(name) && !factoryHashMap.containsKey(name)){
             singletonHashMap.put(name, creator);
             dependenciesHashMap.put(name, parameters);
         }
-        else throw new DependencyException("Singleton " + name + " is already registered");
+        else throw new DependencyException("Registering " + name + " already registered");
     }
 
     @Override
     public Object getObject(String name) throws DependencyException {
-        if(objectHashMap.containsKey(name) && factoryHashMap.containsKey(name)){
-            throw new DependencyException("Key duplicated");
-        }
-        if(objectHashMap.containsKey(name) && singletonHashMap.containsKey(name)){
-            throw new DependencyException("Key duplicated");
-        }
-        if(factoryHashMap.containsKey(name) && singletonHashMap.containsKey(name)){
-            throw new DependencyException("Key duplicated");
-        }
         if(objectHashMap.containsKey(name)){
             return objectHashMap.get(name);
         }
@@ -68,7 +59,10 @@ public class Container implements Injector {
         else if (singletonHashMap.containsKey(name)){
             if(!singletonObjectHashMap.containsKey(name)) {
                 checkDependencies(name);
-                return singletonObjectHashMap.put(name, singletonHashMap.get(name).create(getObjectDependencies(name)));
+                Object created = singletonHashMap.get(name).create(getObjectDependencies(name));
+                singletonObjectHashMap.put(name, created);
+                return created;
+                //return singletonObjectHashMap.put(name, singletonHashMap.get(name).create(getObjectDependencies(name)));
             }else
                 return singletonObjectHashMap.get(name);
         }
@@ -81,7 +75,10 @@ public class Container implements Injector {
         String[] dependencies = dependenciesHashMap.get(name);
         Object[] parameters = new Object[dependencies.length];
         for(int i = 0 ; i < dependencies.length ; i += 1){
-            parameters[i] = objectHashMap.get(dependencies[i]);
+            if(objectHashMap.containsKey(dependencies[i]))
+                parameters[i] = objectHashMap.get(dependencies[i]);
+            else if(singletonObjectHashMap.containsKey(dependencies[i]))
+                parameters[i] = singletonObjectHashMap.get(dependencies[i]);
         }
         return parameters;
     }
@@ -89,7 +86,7 @@ public class Container implements Injector {
     private void checkDependencies(String name) throws DependencyException{
         for(String dependency: dependenciesHashMap.get(name)){
             if(!objectHashMap.containsKey(dependency) && !singletonObjectHashMap.containsKey(dependency))
-                throw new DependencyException("Dependency missed");
+                throw new DependencyException("Dependency missing");
         }
     }
 }
